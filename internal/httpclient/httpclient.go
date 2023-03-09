@@ -81,6 +81,7 @@ func Hit(text string) HitResult {
 	if err != nil {
 		return HitResult{Err: err, req: req}
 	}
+	_ = res.Body.Close()
 
 	return HitResult{req: req, res: res}
 }
