@@ -104,6 +104,12 @@ XXX: hello # another comment`,
 			`GET www.ramitmittal.com
 Cache-Control: no-cache XXX:hello`,
 		},
+		{
+			"multiple # for comments",
+			`GET www.ramitmittal.com
+## XXX: world
+XXX: hello`,
+		},
 	}
 
 	for _, test := range tests {
