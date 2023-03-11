@@ -79,13 +79,15 @@ func (m *model) prepMessagesForViewport() {
 
 	var messages strings.Builder
 	messages.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF")).Render(requestHeaders[0]))
-	messages.WriteString("\n")
-	messages.WriteString(lipgloss.NewStyle().
-		Foreground(lipgloss.Color("12")).
-		Render(strings.Join(requestHeaders[1:], "\n")))
+	if len(requestHeaders) > 1 {
+		messages.WriteRune('\n')
+		messages.WriteString(lipgloss.NewStyle().
+			Foreground(lipgloss.Color("12")).
+			Render(strings.Join(requestHeaders[1:], "\n")))
+	}
 	messages.WriteString("\n\n")
 	messages.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF")).Render(responseHeaders[0]))
-	messages.WriteString("\n")
+	messages.WriteRune('\n')
 	messages.WriteString(lipgloss.NewStyle().
 		Foreground(lipgloss.Color("12")).
 		Render(strings.Join(responseHeaders[1:], "\n")))
