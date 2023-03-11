@@ -2,21 +2,6 @@ package parser
 
 import "testing"
 
-func TestSimpleRequest(t *testing.T) {
-	r := `GET www.ramitmittal.com`
-	rBytes := []byte(r)
-
-	if v, err := Parse(rBytes); err != nil {
-		t.Fatal(err.Error())
-	} else if v.method != "GET" {
-		t.FailNow()
-	} else if v.url != "www.ramitmittal.com" {
-		t.FailNow()
-	} else if len(v.headers) != 0 {
-		t.FailNow()
-	}
-}
-
 func TestValidQuotes(t *testing.T) {
 	input := `GET "https://www.ramitmittal.com"
 Accept-Encoding: "gzip, br"`
@@ -46,6 +31,10 @@ func TestValidInputs(t *testing.T) {
 		name  string
 		input string
 	}{
+		{
+			"simple request with one header",
+			`GET www.ramitmittal.com XXX: hello`,
+		},
 		{
 			"first line can be a comment",
 			`#POST www.ramitmittal.com
