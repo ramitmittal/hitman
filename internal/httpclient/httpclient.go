@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -9,56 +10,58 @@ import (
 )
 
 type HitResult struct {
-	Err error
-	req *http.Request
-	res *http.Response
+	Err             error
+	RequestHeaders  []string
+	ResponseHeaders []string
+	ResponseBody    string
 }
 
-func (hr *HitResult) RequestHeaders() []string {
-	headers := []string{
-		hr.req.Method + " " + hr.req.URL.String(),
+func formatRequest(req *http.Request) []string {
+	reqHeaders := []string{
+		req.Method + " " + req.URL.String(),
 	}
-	for h, v := range hr.req.Header {
+	for h, v := range req.Header {
 		for _, vv := range v {
-			headers = append(headers, h+" : "+vv)
+			reqHeaders = append(reqHeaders, h+" : "+vv)
 		}
 	}
-	return headers
+	return reqHeaders
 }
 
-func (hr *HitResult) ResponseHeaders() []string {
-	headers := []string{
-		hr.res.Status,
+func formatResponseHeaders(res *http.Response) []string {
+	resHeaders := []string{
+		res.Status,
 	}
-	for h, v := range hr.res.Header {
+	for h, v := range res.Header {
 		for _, vv := range v {
-			headers = append(headers, h+" : "+vv)
+			resHeaders = append(resHeaders, h+" : "+vv)
 		}
 	}
-	return headers
+	return resHeaders
 }
 
 func (hr *HitResult) String() string {
 	var sb strings.Builder
-	for _, v := range hr.RequestHeaders() {
+	for _, v := range hr.RequestHeaders {
 		sb.WriteString(v)
 		sb.WriteRune('\n')
 	}
 	sb.WriteRune('\n')
-	for _, v := range hr.ResponseHeaders() {
+	for _, v := range hr.ResponseHeaders {
 		sb.WriteString(v)
 		sb.WriteRune('\n')
 	}
+	sb.WriteRune('\n')
+	sb.WriteString(hr.ResponseBody)
 	return sb.String()
 }
 
 // Perform an HTTP request based on the command text
-func Hit(text string) HitResult {
+func Hit(text string) (hr HitResult) {
 	parserResult, err := parser.Parse([]byte(text))
 	if err != nil {
-		return HitResult{
-			Err: errors.New("please enter a valid query"),
-		}
+		hr.Err = errors.New("please enter a valid query")
+		return
 	}
 
 	http.DefaultClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
@@ -72,16 +75,29 @@ func Hit(text string) HitResult {
 
 	req, err := http.NewRequest(parserResult.GetMethod(), url, nil)
 	if err != nil {
-		return HitResult{Err: err}
+		hr.Err = err
+		return
 	}
 	for k, v := range parserResult.GetHeaders() {
 		req.Header.Add(k, v)
 	}
+
+	hr.RequestHeaders = formatRequest(req)
+
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return HitResult{Err: err, req: req}
+		hr.Err = err
+		return
+	}
+	hr.ResponseHeaders = formatResponseHeaders(res)
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		hr.Err = err
+		return
 	}
 	_ = res.Body.Close()
+	hr.ResponseBody = string(body)
 
-	return HitResult{req: req, res: res}
+	return
 }

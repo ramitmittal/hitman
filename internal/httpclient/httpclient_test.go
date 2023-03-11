@@ -25,7 +25,7 @@ func TestHttpClient(t *testing.T) {
 
 	if hr.Err != nil {
 		t.Fail()
-	} else if hr.res.StatusCode != http.StatusOK {
+	} else if hr.ResponseHeaders[0] != "200 OK" {
 		t.Fail()
 	}
 }

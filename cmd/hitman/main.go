@@ -74,8 +74,8 @@ func (m *model) prepMessagesForViewport() {
 		return
 	}
 
-	requestHeaders := m.hResult.RequestHeaders()
-	responseHeaders := m.hResult.ResponseHeaders()
+	requestHeaders := m.hResult.RequestHeaders
+	responseHeaders := m.hResult.ResponseHeaders
 
 	var messages strings.Builder
 	messages.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF")).Render(requestHeaders[0]))
@@ -89,6 +89,8 @@ func (m *model) prepMessagesForViewport() {
 	messages.WriteString(lipgloss.NewStyle().
 		Foreground(lipgloss.Color("12")).
 		Render(strings.Join(responseHeaders[1:], "\n")))
+	messages.WriteString("\n\n")
+	messages.WriteString(m.hResult.ResponseBody)
 	m.messages = messages.String()
 }
 
