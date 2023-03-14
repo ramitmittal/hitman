@@ -81,6 +81,12 @@ func Hit(text string) (hr HitResult) {
 	for k, v := range parserResult.GetHeaders() {
 		req.Header.Add(k, v)
 	}
+	if req.Header.Get("Host") != "" {
+		// Go httpClient treats Host header specially
+		// Set it on the request directly and remove it from headers
+		req.Host = req.Header.Get("Host")
+		req.Header.Del("Host")
+	}
 
 	hr.RequestHeaders = formatRequest(req)
 
