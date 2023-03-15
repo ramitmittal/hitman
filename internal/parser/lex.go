@@ -12,6 +12,7 @@ type Result struct {
 	method  string
 	url     string
 	headers map[string]string
+	flags   map[string]string
 }
 
 func (r Result) GetMethod() string {
@@ -22,6 +23,10 @@ func (r Result) GetURL() string {
 }
 func (r Result) GetHeaders() map[string]string {
 	return r.headers
+}
+
+func (r Result) GetFlags() map[string]string {
+	return r.flags
 }
 
 func Parse(input []byte) (Result, error) {
@@ -84,6 +89,22 @@ func (l *lex) Lex(lval *yySymType) int {
 			str.WriteRune(r1)
 		}
 	}
+	if r == '-' {
+		// gather everything till space or newline
+		var str strings.Builder
+		for {
+			r1, size1 := utf8.DecodeRune(l.input[l.position:])
+			l.position += size1
+			if size1 == 0 {
+				return 0
+			}
+			if r1 == ' ' || r1 == '\n' {
+				lval.val = str.String()
+				return Flag
+			}
+			str.WriteRune(r1)
+		}
+	}
 
 	// gather everything till one of the aforementioned characters
 	var str strings.Builder
@@ -113,4 +134,10 @@ func merge(x, y map[string]string) map[string]string {
 		y[k] = v
 	}
 	return y
+}
+
+func mapOf(k, v string) map[string]string {
+	return map[string]string{
+		k: v,
+	}
 }

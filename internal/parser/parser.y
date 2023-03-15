@@ -16,14 +16,16 @@ func setResult(l yyLexer, v Result) {
 %type <result> request
 %type <hh> headers
 %type <hh> header
+%type <hh> flags
 
 %token <val> S
+%token <val> Flag
 
 %start request
 
 %%
 
-request: S S headers
+request: S S headers flags
     {
         $$ = Result{method: $1, url: $2, headers: $3}
         setResult(yylex, $$)
@@ -39,4 +41,8 @@ header: S ':' S
             $1: $3,
         }
     }
+
+flags: flags Flag
+    { $$ = merge(mapOf($2, ""), $1)}
+| {}
 %%

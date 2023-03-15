@@ -16,16 +16,6 @@ Accept-Encoding: "gzip, br"`
 	}
 }
 
-func TestInvalidQuotes(t *testing.T) {
-	input := `GET https://www.ramitmittal.com
-Accept-Encoding: gzip, "br"`
-	inputBytes := []byte(input)
-
-	if _, err := Parse(inputBytes); err == nil {
-		t.Fail()
-	}
-}
-
 func TestValidInputs(t *testing.T) {
 	var tests = []struct {
 		name  string
@@ -99,6 +89,10 @@ Cache-Control: no-cache XXX:hello`,
 ## XXX: world
 XXX: hello`,
 		},
+		{
+			"flags after headers",
+			`GET www.ramitmittal.com XXX: hello -flag1`,
+		},
 	}
 
 	for _, test := range tests {
@@ -123,6 +117,9 @@ func TestInvalidInputs(t *testing.T) {
 	}{
 		{"Multiple methods", `GET POST www.ramitmittal.com`},
 		{"Request scheme in URL without quotes", `GET https://www.ramitmittal.com`},
+		{"Flags before headers", `GET www.ramitmittal.com -flag1 Cache-Control: "no-cache"`},
+		{"URL with : must be quoted", `GET https://www.ramitmittal.com`},
+		{"Quotes inside header values are not supported", `GET www.ramitmittal.com Accept-Encoding: gzip, "br"`},
 	}
 
 	for _, test := range tests {

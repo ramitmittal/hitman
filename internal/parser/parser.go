@@ -15,12 +15,14 @@ type yySymType struct {
 }
 
 const S = 57346
+const Flag = 57347
 
 var yyToknames = [...]string{
 	"$end",
 	"error",
 	"$unk",
 	"S",
+	"Flag",
 	"':'",
 }
 var yyStatenames = [...]string{}
@@ -37,35 +39,38 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 8
+const yyLast = 10
 
 var yyAct = [...]int{
 
-	7, 8, 6, 3, 2, 5, 4, 1,
+	9, 8, 10, 7, 3, 2, 5, 6, 4, 1,
 }
 var yyPact = [...]int{
 
-	0, -1000, -1, -1000, -2, -1000, -5, -3, -1000,
+	1, -1000, 0, -1000, -1, -4, -1000, -6, -1000, -2,
+	-1000,
 }
 var yyPgo = [...]int{
 
-	0, 7, 6, 5,
+	0, 9, 8, 7, 6,
 }
 var yyR1 = [...]int{
 
-	0, 1, 2, 2, 3,
+	0, 1, 2, 2, 3, 4, 4,
 }
 var yyR2 = [...]int{
 
-	0, 3, 2, 0, 3,
+	0, 4, 2, 0, 3, 2, 0,
 }
 var yyChk = [...]int{
 
-	-1000, -1, 4, 4, -2, -3, 4, 5, 4,
+	-1000, -1, 4, 4, -2, -4, -3, 4, 5, 6,
+	4,
 }
 var yyDef = [...]int{
 
-	0, -2, 0, 3, 1, 2, 0, 0, 4,
+	0, -2, 0, 3, 6, 1, 2, 0, 5, 0,
+	4,
 }
 var yyTok1 = [...]int{
 
@@ -74,11 +79,11 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 3, 3, 3, 5,
+	3, 3, 3, 3, 3, 3, 3, 3, 6,
 }
 var yyTok2 = [...]int{
 
-	2, 3, 4,
+	2, 3, 4, 5,
 }
 var yyTok3 = [...]int{
 	0,
@@ -420,7 +425,7 @@ yydefault:
 	switch yynt {
 
 	case 1:
-		yyDollar = yyS[yypt-3 : yypt+1]
+		yyDollar = yyS[yypt-4 : yypt+1]
 		{
 			yyVAL.result = Result{method: yyDollar[1].val, url: yyDollar[2].val, headers: yyDollar[3].hh}
 			setResult(yylex, yyVAL.result)
@@ -440,6 +445,15 @@ yydefault:
 			yyVAL.hh = map[string]string{
 				yyDollar[1].val: yyDollar[3].val,
 			}
+		}
+	case 5:
+		yyDollar = yyS[yypt-2 : yypt+1]
+		{
+			yyVAL.hh = merge(mapOf(yyDollar[2].val, ""), yyDollar[1].hh)
+		}
+	case 6:
+		yyDollar = yyS[yypt-0 : yypt+1]
+		{
 		}
 	}
 	goto yystack /* stack new state and value */
