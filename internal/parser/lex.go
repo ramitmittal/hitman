@@ -81,10 +81,7 @@ func (l *lex) Lex(lval *yySymType) int {
 		for {
 			r1, size1 := utf8.DecodeRune(l.input[l.position:])
 			l.position += size1
-			if size1 == 0 {
-				return 0
-			}
-			if r1 == ' ' || r1 == '\n' {
+			if r1 == '\n' || r1 == ' ' || r1 == ':' || size1 == 0 {
 				lval.val = str.String()
 				return Flag
 			}

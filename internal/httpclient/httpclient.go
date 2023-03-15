@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"crypto/tls"
 	"errors"
 	"io"
 	"net/http"
@@ -56,6 +57,10 @@ func (hr *HitResult) String() string {
 	return sb.String()
 }
 
+var (
+	flagInsecureSkipVerify = "insecure"
+)
+
 // Perform an HTTP request based on the command text
 func Hit(text string) (hr HitResult) {
 	parserResult, err := parser.Parse([]byte(text))
@@ -64,8 +69,18 @@ func Hit(text string) (hr HitResult) {
 		return
 	}
 
-	http.DefaultClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+	client := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	if _, prs := parserResult.Flags[flagInsecureSkipVerify]; prs {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+			},
+		}
 	}
 
 	url := parserResult.Url
@@ -89,7 +104,7 @@ func Hit(text string) (hr HitResult) {
 
 	hr.RequestHeaders = formatRequest(req)
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		hr.Err = err
 		return

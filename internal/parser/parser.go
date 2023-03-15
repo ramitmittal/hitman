@@ -12,6 +12,7 @@ type yySymType struct {
 	result Result
 	val    string
 	hh     map[string]string
+	ff     map[string]string
 }
 
 const S = 57346
@@ -427,7 +428,7 @@ yydefault:
 	case 1:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		{
-			yyVAL.result = Result{Method: yyDollar[1].val, Url: yyDollar[2].val, Headers: yyDollar[3].hh}
+			yyVAL.result = Result{Method: yyDollar[1].val, Url: yyDollar[2].val, Headers: yyDollar[3].hh, Flags: yyDollar[4].ff}
 			setResult(yylex, yyVAL.result)
 		}
 	case 2:
@@ -449,7 +450,7 @@ yydefault:
 	case 5:
 		yyDollar = yyS[yypt-2 : yypt+1]
 		{
-			yyVAL.hh = merge(mapOf(yyDollar[2].val, ""), yyDollar[1].hh)
+			yyVAL.ff = merge(mapOf(yyDollar[2].val, ""), yyDollar[1].ff)
 		}
 	case 6:
 		yyDollar = yyS[yypt-0 : yypt+1]

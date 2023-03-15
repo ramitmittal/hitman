@@ -16,6 +16,29 @@ Accept-Encoding: "gzip, br"`
 	}
 }
 
+func TestValidFlags(t *testing.T) {
+	var tests = []struct {
+		name  string
+		input string
+	}{
+		{"One flag and one header", `GET www.ramitmittal.com Cache-Control: "no-cache" -flag1`},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			inputBytes := []byte(test.input)
+
+			if v, err := Parse(inputBytes); err != nil {
+				t.Fail()
+			} else if len(v.Flags) != 1 {
+				t.Fail()
+			} else if len(v.Headers) != 1 {
+				t.Fail()
+			}
+		})
+	}
+}
+
 func TestValidInputs(t *testing.T) {
 	var tests = []struct {
 		name  string

@@ -11,12 +11,13 @@ func setResult(l yyLexer, v Result) {
     result Result
     val string
     hh map[string]string
+    ff map[string]string
 }
 
 %type <result> request
 %type <hh> headers
 %type <hh> header
-%type <hh> flags
+%type <ff> flags
 
 %token <val> S
 %token <val> Flag
@@ -27,7 +28,7 @@ func setResult(l yyLexer, v Result) {
 
 request: S S headers flags
     {
-        $$ = Result{Method: $1, Url: $2, Headers: $3}
+        $$ = Result{Method: $1, Url: $2, Headers: $3, Flags: $4}
         setResult(yylex, $$)
     }
 
