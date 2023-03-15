@@ -68,17 +68,17 @@ func Hit(text string) (hr HitResult) {
 		return http.ErrUseLastResponse
 	}
 
-	url := parserResult.GetURL()
+	url := parserResult.Url
 	if !strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
 		url = "https://" + url
 	}
 
-	req, err := http.NewRequest(parserResult.GetMethod(), url, nil)
+	req, err := http.NewRequest(parserResult.Method, url, nil)
 	if err != nil {
 		hr.Err = err
 		return
 	}
-	for k, v := range parserResult.GetHeaders() {
+	for k, v := range parserResult.Headers {
 		req.Header.Add(k, v)
 	}
 	if req.Header.Get("Host") != "" {

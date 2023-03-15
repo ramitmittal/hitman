@@ -427,7 +427,7 @@ yydefault:
 	case 1:
 		yyDollar = yyS[yypt-4 : yypt+1]
 		{
-			yyVAL.result = Result{method: yyDollar[1].val, url: yyDollar[2].val, headers: yyDollar[3].hh}
+			yyVAL.result = Result{Method: yyDollar[1].val, Url: yyDollar[2].val, Headers: yyDollar[3].hh}
 			setResult(yylex, yyVAL.result)
 		}
 	case 2:

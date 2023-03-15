@@ -9,9 +9,9 @@ Accept-Encoding: "gzip, br"`
 
 	if v, err := Parse(inputBytes); err != nil {
 		t.Fail()
-	} else if v.url != "https://www.ramitmittal.com" {
+	} else if v.Url != "https://www.ramitmittal.com" {
 		t.Fail()
-	} else if v.headers["Accept-Encoding"] != "gzip, br" {
+	} else if v.Headers["Accept-Encoding"] != "gzip, br" {
 		t.Fail()
 	}
 }
@@ -101,9 +101,9 @@ XXX: hello`,
 
 			if v, err := Parse(inputBytes); err != nil {
 				t.Fail()
-			} else if v.method != "GET" {
+			} else if v.Method != "GET" {
 				t.Fail()
-			} else if v.headers["XXX"] != "hello" {
+			} else if v.Headers["XXX"] != "hello" {
 				t.Fail()
 			}
 		})

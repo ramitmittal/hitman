@@ -9,24 +9,10 @@ import (
 //go:generate go run golang.org/x/tools/cmd/goyacc -l -o parser.go parser.y
 
 type Result struct {
-	method  string
-	url     string
-	headers map[string]string
-	flags   map[string]string
-}
-
-func (r Result) GetMethod() string {
-	return r.method
-}
-func (r Result) GetURL() string {
-	return r.url
-}
-func (r Result) GetHeaders() map[string]string {
-	return r.headers
-}
-
-func (r Result) GetFlags() map[string]string {
-	return r.flags
+	Method  string
+	Url     string
+	Headers map[string]string
+	Flags   map[string]string
 }
 
 func Parse(input []byte) (Result, error) {

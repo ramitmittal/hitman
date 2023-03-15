@@ -27,7 +27,7 @@ func setResult(l yyLexer, v Result) {
 
 request: S S headers flags
     {
-        $$ = Result{method: $1, url: $2, headers: $3}
+        $$ = Result{Method: $1, Url: $2, Headers: $3}
         setResult(yylex, $$)
     }
 
