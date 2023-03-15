@@ -83,9 +83,8 @@ func Hit(text string) (hr HitResult) {
 	}
 	if req.Header.Get("Host") != "" {
 		// Go httpClient treats Host header specially
-		// Set it on the request directly and remove it from headers
+		// Set it on the request directly
 		req.Host = req.Header.Get("Host")
-		req.Header.Del("Host")
 	}
 
 	hr.RequestHeaders = formatRequest(req)
