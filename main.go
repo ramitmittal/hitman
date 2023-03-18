@@ -14,7 +14,10 @@ import (
 	"github.com/ramitmittal/hitman/internal/httpclient"
 )
 
-var GitSHA string
+var (
+	GitSHA string
+	GitTag string
+)
 
 type helpKeyMap map[string]key.Binding
 
@@ -106,7 +109,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			Foreground(lipgloss.Color("#FFFFFF")).
 			Background(lipgloss.Color("2")).
 			Width(msg.Width).
-			Render(fmt.Sprintf("Hitman Alpha. Build Version: %s", GitSHA))
+			Render(fmt.Sprintf("Hitman %s. Build Version: %s", GitTag, GitSHA))
 
 		m.viewport = viewport.New(msg.Width, msg.Height*75/100)
 		m.viewport.SetContent(m.messages)
