@@ -41,6 +41,20 @@ func formatResponseHeaders(res *http.Response) []string {
 	return resHeaders
 }
 
+func (hr *HitResult) Headers() string {
+	var sb strings.Builder
+	for _, v := range hr.RequestHeaders {
+		sb.WriteString(v)
+		sb.WriteRune('\n')
+	}
+	sb.WriteRune('\n')
+	for _, v := range hr.ResponseHeaders {
+		sb.WriteString(v)
+		sb.WriteRune('\n')
+	}
+	return sb.String()
+}
+
 func (hr *HitResult) String() string {
 	var sb strings.Builder
 	for _, v := range hr.RequestHeaders {

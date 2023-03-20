@@ -25,6 +25,7 @@ func (k helpKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
 		key.NewBinding(key.WithKeys("Tab"), key.WithHelp("Tab", "send request")),
 		key.NewBinding(key.WithKeys("Ctrl+S"), key.WithHelp("Ctrl+S", "copy response")),
+		key.NewBinding(key.WithKeys("Ctrl+R"), key.WithHelp("Ctrl+R", "copy headers")),
 		key.NewBinding(key.WithKeys("Ctrl+C"), key.WithHelp("Ctrl+C", "quit")),
 	}
 }
@@ -140,8 +141,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlS:
-			// TODO: handle error
-			copyText(m.hResult.String())
+			if copyErr := copyText(m.hResult.String()); copyErr != nil {
+				msgText := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(copyErr.Error())
+				m.messages = msgText + "\n" + m.messages
+				m.viewport.SetContent(m.messages)
+				m.viewport.GotoTop()
+			}
+		case tea.KeyCtrlR:
+			if copyErr := copyText(m.hResult.Headers()); copyErr != nil {
+				msgText := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(copyErr.Error())
+				m.messages = msgText + "\n" + m.messages
+				m.viewport.SetContent(m.messages)
+				m.viewport.GotoTop()
+			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			saveText(m.textarea.Value())
 			return m, tea.Quit
