@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/ramitmittal/hitman/internal/parser"
@@ -30,15 +31,17 @@ func formatRequest(req *http.Request) []string {
 }
 
 func formatResponseHeaders(res *http.Response) []string {
-	resHeaders := []string{
-		res.Status,
-	}
+	// equal length is a good starting point even though
+	// headers slice may not have the same length as response header map
+	// as response headers are flattened
+	resHeaders := make([]string, 0, len(res.Header))
 	for h, v := range res.Header {
 		for _, vv := range v {
 			resHeaders = append(resHeaders, h+" : "+vv)
 		}
 	}
-	return resHeaders
+	sort.Strings(resHeaders)
+	return append([]string{res.Status}, resHeaders...)
 }
 
 func (hr *HitResult) Headers() string {
