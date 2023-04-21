@@ -18,9 +18,9 @@ clean:
 	rm -rf out/
 
 build: generate
-	GOARCH=amd64 GOOS=linux go build -o ${BINARY_NAME}-linux -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)"
-	GOARCH=amd64 GOOS=darwin go build -o ${BINARY_NAME}-darwin -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)"
-	GOARCH=amd64 GOOS=windows go build -o ${BINARY_NAME}-windows.exe -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)"
+	GOARCH=amd64 GOOS=linux go build -o ${BINARY_NAME}-linux -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)" cmd/hitman/*
+	GOARCH=amd64 GOOS=darwin go build -o ${BINARY_NAME}-darwin -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)" cmd/hitman/*
+	GOARCH=amd64 GOOS=windows go build -o ${BINARY_NAME}-windows.exe -ldflags "-X main.GitSHA=$(GIT_SHA) -X main.GitTag=$(GIT_TAG)" cmd/hitman/*
 
 run: build
 	./${BINARY_NAME}-linux
