@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/ramitmittal/hitman/internal/parser"
 )
@@ -134,7 +135,23 @@ func Hit(text string) (hr HitResult) {
 		return
 	}
 	_ = res.Body.Close()
-	hr.ResponseBody = string(body)
 
+	// Scan the response body for non-printable characters
+	// and set the response body to a dummy value to not mess up the terminal
+	idx := 0
+	for idx < len(body) {
+		r, size := utf8.DecodeRune(body[idx:])
+		if r != utf8.RuneError {
+			idx += size
+		} else if body[idx] == byte(10) {
+			// Apparently line feeds are also not printable
+			idx += 1
+		} else {
+			hr.ResponseBody = "\n\nRESPONSE CONTAINS NON-PRINTABLE CHARACTERS.\n"
+			return
+		}
+	}
+
+	hr.ResponseBody = string(body)
 	return
 }
