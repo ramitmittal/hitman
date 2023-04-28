@@ -10,7 +10,7 @@ A TUI HTTP client for debugging request/response headers inspired by [restclient
 
 ## How to install + run
 ```
-$ go install github.com/ramitmittal/hitman@latest
+$ go install github.com/ramitmittal/hitman/cmd/hitman@latest
 $ hitman
 ```
 
