@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -27,5 +28,63 @@ func TestHttpClient(t *testing.T) {
 		t.Fail()
 	} else if hr.ResponseHeaders[0] != "200 OK" {
 		t.Fail()
+	}
+}
+
+func TestBinaryResponseBody(t *testing.T) {
+	nonPrintableResponse := "\n\nRESPONSE CONTAINS NON-PRINTABLE CHARACTERS.\n"
+
+	var tests = []struct {
+		name  string
+		input string
+	}{
+		{
+			"Bytes from a JPG file",
+			"/9j/4AAQSkZJRgABAQAAAQABAAD//gA7Q1JFQVRPUjogZ2QtanBlZyB2MS4wICh1c2luZyBJSkcgSlBFRyB2NjIpLCBxdWFsaXR5ID0gOTQK/9sAQwACAQECAQECAgICAgICAgMFAwMDAwMGBAQDBQcGBwcHBgcHCAkLCQgICggHBwoNCgoLDAwMDAc",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			inputBytes, err := base64.RawStdEncoding.DecodeString(test.input)
+			if err != nil {
+				panic(err)
+			}
+			if formatResponseBody(inputBytes) != nonPrintableResponse {
+				t.Fail()
+			}
+		})
+	}
+}
+
+func TestPlainResponseBody(t *testing.T) {
+	nonPrintableResponse := "\n\nRESPONSE CONTAINS NON-PRINTABLE CHARACTERS.\n"
+
+	var tests = []struct {
+		name  string
+		input string
+	}{
+		{
+			"Text",
+			"Hello, World!",
+		},
+		{
+			"HTML",
+			`<!DOCTYPE html><html lang="en"> <head> <meta charset="UTF-8">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<meta http-equiv="X-UA-Compatible" content="ie=edge">
+				<title>My Website</title> <link rel="stylesheet" href="./style.css">
+				<link rel="icon" href="./favicon.ico" type="image/x-icon"> </head>
+				<body> <main> <h1>Welcome to My Website</h1>
+				</main><script src="index.js"></script> </body></html>`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if formatResponseBody([]byte(test.input)) == nonPrintableResponse {
+				t.Fail()
+			}
+		})
 	}
 }
