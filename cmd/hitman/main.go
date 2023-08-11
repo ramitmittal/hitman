@@ -189,8 +189,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func main() {
-	p := tea.NewProgram(model{}, tea.WithMouseAllMotion())
-
+	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}
