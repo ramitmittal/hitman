@@ -1,12 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/help"
-	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,44 +15,40 @@ import (
 )
 
 var (
+	// injected at build time
 	GitSHA string
 	GitTag string
 )
 
-type helpKeyMap map[string]key.Binding
-
-func (k helpKeyMap) ShortHelp() []key.Binding {
-	return []key.Binding{
-		key.NewBinding(key.WithKeys("Tab"), key.WithHelp("Tab", "send request")),
-		key.NewBinding(key.WithKeys("Ctrl+S"), key.WithHelp("Ctrl+S", "copy response")),
-		key.NewBinding(key.WithKeys("Ctrl+R"), key.WithHelp("Ctrl+R", "copy headers")),
-		key.NewBinding(key.WithKeys("Ctrl+C"), key.WithHelp("Ctrl+C", "quit")),
-	}
-}
-
-func (k helpKeyMap) FullHelp() [][]key.Binding {
-	return [][]key.Binding{
-		k.ShortHelp(),
-	}
-}
-
-var hkm = helpKeyMap{}
-
 type model struct {
-	ready bool
+	ready        bool
+	windowWidth  int
+	windowHeight int
 
-	// static title line
-	title string
+	// plain text for the title bar
+	titlePlainText string
 
-	// text for the viewport (formatted req+res headers)
-	messages string
+	// title bar; rendered at the top of the page
+	titleComponent string
 
-	// result from the last HTTP call
-	hResult httpclient.HitResult
+	// error bar; rendered below the title bar if last operation errored;
+	errComponent string
 
-	textarea textarea.Model
+	// help text; rendered at the bottom
+	helpComponent string
+
+	// result of an HTTP calls stored as r1, r2, r3, ...rn, \n, R1, R2, R3, ...Rn, \n, RB]
+	// where r1, ...rn are request headers, R1, ...Rn are response headers, and RB is response body
+	rawResult []string
+
+	// the index of rawResult that contains the line selected in the viewport
+	viewportSelectedLineIndex int
+
+	// viewport for results of http calls; rendered below error component
 	viewport viewport.Model
-	help     help.Model
+
+	// text area for user input; rendered below result viewport
+	textarea textarea.Model
 }
 
 func (m model) Init() tea.Cmd {
@@ -61,135 +57,258 @@ func (m model) Init() tea.Cmd {
 
 func (m model) View() string {
 	if !m.ready {
-		return "\n Starting..."
+		return "Starting..."
 	}
 	return fmt.Sprintf(
-		"%s\n%s\n\n%s\n%s",
-		m.title,
+		"%s\n%s\n%s\n\n%s\n\n%s",
+		m.titleComponent,
+		m.errComponent,
 		m.viewport.View(),
 		m.textarea.View(),
-		m.help.View(hkm),
+		m.helpComponent,
 	)
 }
 
-func (m *model) prepMessagesForViewport() {
-	if m.hResult.Err != nil {
-		m.messages = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(m.hResult.Err.Error())
-		return
-	}
-
-	requestHeaders := m.hResult.RequestHeaders
-	responseHeaders := m.hResult.ResponseHeaders
-
-	var messages strings.Builder
-	messages.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF")).Render(requestHeaders[0]))
-	if len(requestHeaders) > 1 {
-		messages.WriteRune('\n')
-		messages.WriteString(lipgloss.NewStyle().
-			Foreground(lipgloss.Color("12")).
-			Render(strings.Join(requestHeaders[1:], "\n")))
-	}
-	messages.WriteString("\n\n")
-	messages.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF")).Render(responseHeaders[0]))
-	messages.WriteRune('\n')
-	messages.WriteString(lipgloss.NewStyle().
-		Foreground(lipgloss.Color("12")).
-		Render(strings.Join(responseHeaders[1:], "\n")))
-	messages.WriteString("\n\n")
-	messages.WriteString(m.hResult.ResponseBody)
-	m.messages = messages.String()
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var updateViewport bool
-	var updateTextarea bool
+	var stopPropogation bool
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.title = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFFFF")).
-			Background(lipgloss.Color("2")).
-			Width(msg.Width).
-			Render(fmt.Sprintf("Hitman %s. Build Version: %s", GitTag, GitSHA))
 
-		m.viewport = viewport.New(msg.Width, msg.Height*75/100)
-		m.viewport.SetContent(m.messages)
-
-		m.textarea = textarea.New()
-		m.textarea.SetWidth(msg.Width)
-		m.textarea.SetHeight(msg.Height * 13 / 100)
-		m.textarea.Prompt = "┃ "
-		m.textarea.FocusedStyle.CursorLine = lipgloss.NewStyle()
-		m.textarea.ShowLineNumbers = false
-
-		if !m.ready {
-			m.textarea.SetValue(loadText())
-		}
-		for i := 0; i < m.textarea.LineCount(); i++ {
-			m.textarea.CursorUp()
-		}
-		m.textarea.CursorEnd()
-		m.textarea.Focus()
-
-		m.help = help.New()
-		m.help.Width = msg.Width
+		m.windowWidth = msg.Width
+		m.windowHeight = msg.Height
+		m.resetTitle()
+		m.initViewport()
+		m.initTextarea()
+		m.initHelp()
 		m.ready = true
-
-		updateViewport = true
-		updateTextarea = true
 
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlS:
-			if copyErr := copyText(m.hResult.String()); copyErr != nil {
-				msgText := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(copyErr.Error())
-				m.messages = msgText + "\n" + m.messages
-				m.viewport.SetContent(m.messages)
-				m.viewport.GotoTop()
-			}
-		case tea.KeyCtrlR:
-			if copyErr := copyText(m.hResult.Headers()); copyErr != nil {
-				msgText := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(copyErr.Error())
-				m.messages = msgText + "\n" + m.messages
-				m.viewport.SetContent(m.messages)
-				m.viewport.GotoTop()
-			}
 		case tea.KeyCtrlC, tea.KeyEsc:
 			saveText(m.textarea.Value())
 			return m, tea.Quit
+
 		case tea.KeyTab:
-			// TODO: this should be async
-			m.hResult = httpclient.Hit(m.textarea.Value())
-			m.prepMessagesForViewport()
-			m.viewport.SetContent(m.messages)
-			m.viewport.GotoTop()
-		default:
-			updateViewport = true
-			updateTextarea = true
-		}
-	case tea.MouseMsg:
-		if msg.Type == tea.MouseWheelDown || msg.Type == tea.MouseWheelUp {
-			updateViewport = true
+			if result := httpclient.Hit(m.textarea.Value()); result.Err != nil {
+				m.setError(result.Err)
+				m.viewport.SetContent("")
+			} else {
+				if m.errComponent != "" {
+					m.unsetError()
+				}
+				m.setResult(result)
+			}
+			stopPropogation = true
+		case tea.KeyCtrlDown:
+			m.scrollDown()
+			stopPropogation = true
+		case tea.KeyCtrlUp:
+			m.scrollUp()
+			stopPropogation = true
+		case tea.KeyRunes:
+			if msg.Alt {
+				switch string(msg.Runes) {
+				case "a":
+					m.copyResult()
+				case "s":
+					m.copyHeaders()
+				case "d":
+					m.copyHighlight()
+				}
+				stopPropogation = true
+			}
 		}
 	}
 
 	var cmds []tea.Cmd
-	if updateViewport {
+	if !stopPropogation {
 		var vpCmd tea.Cmd
 		m.viewport, vpCmd = m.viewport.Update(msg)
 		cmds = append(cmds, vpCmd)
-	}
-	if updateTextarea {
+
 		var taCmd tea.Cmd
 		m.textarea, taCmd = m.textarea.Update(msg)
 		cmds = append(cmds, taCmd)
 	}
-
 	return m, tea.Batch(cmds...)
 }
 
+// Initialize the title bar
+func (m *model) resetTitle() {
+	m.titleComponent = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Background(lipgloss.Color("2")).
+		Width(m.windowWidth).
+		Render(m.titlePlainText)
+}
+
+// Set title bar with RED background
+func (m *model) errorTitle() {
+	m.titleComponent = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFFFFF")).
+		Background(lipgloss.Color("9")).
+		Width(m.windowWidth).
+		Render(m.titlePlainText)
+}
+
+// Set value for error component
+func (m *model) setError(err error) {
+	m.errComponent = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).Render(err.Error())
+	m.errorTitle()
+	m.viewport.SetContent("")
+	m.viewportSelectedLineIndex = 0
+}
+
+// Unset value for error component
+func (m *model) unsetError() {
+	m.errComponent = ""
+	m.resetTitle()
+}
+
+// Initialize the viewport component
+func (m *model) initViewport() {
+	m.viewport = viewport.New(m.windowWidth, m.windowHeight*78/100)
+	m.viewport.KeyMap = viewport.KeyMap{}
+	m.viewport.SetContent("")
+}
+
+// Initialize the textarea component
+func (m *model) initTextarea() {
+	m.textarea = textarea.New()
+	m.textarea.SetWidth(m.windowWidth)
+	m.textarea.SetHeight(m.windowHeight * 15 / 100)
+	m.textarea.Prompt = "┃ "
+	m.textarea.FocusedStyle.CursorLine = lipgloss.NewStyle()
+	m.textarea.ShowLineNumbers = false
+
+	if !m.ready {
+		m.textarea.SetValue(loadText())
+	}
+	for i := 0; i < m.textarea.LineCount(); i++ {
+		m.textarea.CursorUp()
+	}
+	m.textarea.CursorEnd()
+	m.textarea.Focus()
+}
+
+// Initialize the help component
+func (m *model) initHelp() {
+	h := help.New()
+	h.Width = m.windowWidth
+	m.helpComponent = h.View(helpKeyMap{})
+}
+
+// Attempts to copy last hit's result to clipboard; populates error component on failure
+func (m *model) copyResult() {
+	if len(m.rawResult) == 0 {
+		m.setError(errors.New("no result to copy"))
+	} else if err := copyText(strings.Join(m.rawResult, "\n")); err != nil {
+		m.setError(err)
+	} else {
+		m.unsetError()
+	}
+}
+
+// Attempts to copy last hit's response headers to clipboard; populates error component on failure
+func (m *model) copyHeaders() {
+	if len(m.rawResult) == 0 {
+		m.setError(errors.New("no headers to copy"))
+	} else if err := copyText(strings.Join(m.rawResult[:len(m.rawResult)-2], "\n")); err != nil {
+		m.setError(err)
+	} else {
+		m.unsetError()
+	}
+}
+
+// Attempts to copy the viewport's highlighted text to clipboard; populates error component on failure
+func (m *model) copyHighlight() {
+	if err := copyText(m.rawResult[m.viewportSelectedLineIndex]); err != nil {
+		m.setError(err)
+	} else {
+		m.unsetError()
+	}
+}
+
+// Transform httpclient.HitResult into []string and update model
+func (m *model) setResult(result *httpclient.HitResult) {
+	rawResult := make([]string, 0, len(result.RequestHeaders)+len(result.ResponseHeaders)+3)
+
+	rawResult = append(rawResult, result.RequestHeaders...)
+	rawResult = append(rawResult, "\n")
+	rawResult = append(rawResult, result.ResponseHeaders...)
+	rawResult = append(rawResult, "\n")
+	rawResult = append(rawResult, result.ResponseBody)
+
+	if m.viewportSelectedLineIndex > len(rawResult) {
+		m.viewportSelectedLineIndex = 0
+	}
+	m.rawResult = rawResult
+	m.updateFormattedResult()
+}
+
+// Convert raw http result []string into formatted text for viewport
+func (m *model) updateFormattedResult() {
+	highlightedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Background(lipgloss.Color("#FFFFFF"))
+	headerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
+
+	vhli := m.viewportSelectedLineIndex
+	rawResultLength := len(m.rawResult)
+
+	var formattedResult strings.Builder
+
+	for idx, head := range m.rawResult[:rawResultLength-2] {
+		if idx == vhli {
+			formattedResult.WriteString(highlightedStyle.Render(head))
+		} else {
+			formattedResult.WriteString(headerStyle.Render(head))
+		}
+		if head != "\n" {
+			formattedResult.WriteRune('\n')
+		}
+	}
+	formattedResult.WriteString(m.rawResult[rawResultLength-2])
+	formattedResult.WriteString(m.rawResult[rawResultLength-1])
+
+	m.viewport.SetContent(formattedResult.String())
+}
+
+func (m *model) scrollDown() {
+	if m.viewportSelectedLineIndex < len(m.rawResult)-3 {
+		m.viewportSelectedLineIndex += 1
+		m.updateFormattedResult()
+	}
+	m.viewport.LineDown(1)
+}
+
+func (m *model) scrollUp() {
+	if m.viewportSelectedLineIndex > 0 {
+		m.viewportSelectedLineIndex -= 1
+		m.updateFormattedResult()
+	}
+	m.viewport.LineUp(1)
+}
+
+// Returns plain text for the title bar component
+func generateTitlePlainText() string {
+	var version string
+
+	if GitTag != "" {
+		version = GitTag
+	} else if GitSHA != "" {
+		version = GitSHA
+	} else {
+		version = "?"
+	}
+
+	return "Hitman HTTP Client v" + version
+}
+
 func main() {
-	p := tea.NewProgram(model{}, tea.WithAltScreen(), tea.WithMouseAllMotion())
+	m := model{
+		titlePlainText: generateTitlePlainText(),
+	}
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseAllMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)
 	}

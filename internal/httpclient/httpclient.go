@@ -45,42 +45,14 @@ func formatResponseHeaders(res *http.Response) []string {
 	return append([]string{res.Status}, resHeaders...)
 }
 
-func (hr *HitResult) Headers() string {
-	var sb strings.Builder
-	for _, v := range hr.RequestHeaders {
-		sb.WriteString(v)
-		sb.WriteRune('\n')
-	}
-	sb.WriteRune('\n')
-	for _, v := range hr.ResponseHeaders {
-		sb.WriteString(v)
-		sb.WriteRune('\n')
-	}
-	return sb.String()
-}
-
-func (hr *HitResult) String() string {
-	var sb strings.Builder
-	for _, v := range hr.RequestHeaders {
-		sb.WriteString(v)
-		sb.WriteRune('\n')
-	}
-	sb.WriteRune('\n')
-	for _, v := range hr.ResponseHeaders {
-		sb.WriteString(v)
-		sb.WriteRune('\n')
-	}
-	sb.WriteRune('\n')
-	sb.WriteString(hr.ResponseBody)
-	return sb.String()
-}
-
 var (
 	flagInsecureSkipVerify = "insecure"
 )
 
 // Perform an HTTP request based on the command text
-func Hit(text string) (hr HitResult) {
+func Hit(text string) (hr *HitResult) {
+	hr = &HitResult{}
+
 	parserResult, err := parser.Parse([]byte(text))
 	if err != nil {
 		hr.Err = errors.New("please enter a valid query")
