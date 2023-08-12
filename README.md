@@ -46,7 +46,7 @@ Accept: application/json
 ## What's planned
 * Releases.
 * Configurable redirects.
-* Something to do with request/response bodies.
+* Something to do with request and response bodies.
 
 ## Meta
 Issues + PRs are welcome!
