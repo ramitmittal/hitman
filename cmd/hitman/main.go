@@ -168,7 +168,7 @@ func (m *model) unsetError() {
 
 // Initialize the viewport component
 func (m *model) initViewport() {
-	m.viewport = viewport.New(m.windowWidth, m.windowHeight*78/100)
+	m.viewport = viewport.New(m.windowWidth, m.windowHeight-11)
 	m.viewport.KeyMap = viewport.KeyMap{}
 	m.viewport.SetContent("")
 }
@@ -177,7 +177,7 @@ func (m *model) initViewport() {
 func (m *model) initTextarea() {
 	m.textarea = textarea.New()
 	m.textarea.SetWidth(m.windowWidth)
-	m.textarea.SetHeight(m.windowHeight * 15 / 100)
+	m.textarea.SetHeight(6)
 	m.textarea.Prompt = "┃ "
 	m.textarea.FocusedStyle.CursorLine = lipgloss.NewStyle()
 	m.textarea.ShowLineNumbers = false
