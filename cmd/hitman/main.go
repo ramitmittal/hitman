@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/ramitmittal/hitman/internal/httpclient"
+	"github.com/ramitmittal/hitman/internal/store"
 )
 
 var (
@@ -86,7 +87,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
-			saveText(m.textarea.Value())
+			store.SaveText(m.textarea.Value())
 			return m, tea.Quit
 
 		case tea.KeyTab:
@@ -183,7 +184,7 @@ func (m *model) initTextarea() {
 	m.textarea.ShowLineNumbers = false
 
 	if !m.ready {
-		m.textarea.SetValue(loadText())
+		m.textarea.SetValue(store.LoadText())
 	}
 	for i := 0; i < m.textarea.LineCount(); i++ {
 		m.textarea.CursorUp()
@@ -203,7 +204,7 @@ func (m *model) initHelp() {
 func (m *model) copyResult() {
 	if len(m.rawResult) == 0 {
 		m.setError(errors.New("no result to copy"))
-	} else if err := copyText(strings.Join(m.rawResult, "\n")); err != nil {
+	} else if err := store.CopyText(strings.Join(m.rawResult, "\n")); err != nil {
 		m.setError(err)
 	} else {
 		m.unsetError()
@@ -214,7 +215,7 @@ func (m *model) copyResult() {
 func (m *model) copyHeaders() {
 	if len(m.rawResult) == 0 {
 		m.setError(errors.New("no headers to copy"))
-	} else if err := copyText(strings.Join(m.rawResult[:len(m.rawResult)-2], "\n")); err != nil {
+	} else if err := store.CopyText(strings.Join(m.rawResult[:len(m.rawResult)-2], "\n")); err != nil {
 		m.setError(err)
 	} else {
 		m.unsetError()
@@ -223,7 +224,7 @@ func (m *model) copyHeaders() {
 
 // Attempts to copy the viewport's highlighted text to clipboard; populates error component on failure
 func (m *model) copyHighlight() {
-	if err := copyText(m.rawResult[m.viewportSelectedLineIndex]); err != nil {
+	if err := store.CopyText(m.rawResult[m.viewportSelectedLineIndex]); err != nil {
 		m.setError(err)
 	} else {
 		m.unsetError()

@@ -1,4 +1,4 @@
-package main
+package store
 
 import (
 	"io/ioutil"
@@ -11,7 +11,7 @@ import (
 
 // Returns the contents of $HOME/.hitman
 // Returns placeholder text when an error is encountered
-func loadText() string {
+func LoadText() string {
 	defaultText := "GET www.example.com"
 
 	var home string
@@ -34,7 +34,7 @@ func loadText() string {
 
 // Save the provided string into $HOME/.hitman
 // Fails silently
-func saveText(text string) {
+func SaveText(text string) {
 	var home string
 
 	if runtime.GOOS == "windows" {
@@ -49,6 +49,6 @@ func saveText(text string) {
 	_ = ioutil.WriteFile(path.Join(home, ".hitman"), []byte(text), 0644)
 }
 
-func copyText(text string) error {
+func CopyText(text string) error {
 	return clipboard.WriteAll(text)
 }
