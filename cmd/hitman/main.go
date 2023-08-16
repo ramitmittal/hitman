@@ -6,7 +6,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/help"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -169,7 +168,7 @@ func (m *model) unsetError() {
 
 // Initialize the viewport component
 func (m *model) initViewport() {
-	m.viewport = viewport.New(m.windowWidth, m.windowHeight-11)
+	m.viewport = viewport.New(m.windowWidth, calculateHeightForViewport(m.windowWidth, m.windowHeight))
 	m.viewport.KeyMap = viewport.KeyMap{}
 	m.viewport.SetContent("")
 }
@@ -195,9 +194,52 @@ func (m *model) initTextarea() {
 
 // Initialize the help component
 func (m *model) initHelp() {
-	h := help.New()
-	h.Width = m.windowWidth
-	m.helpComponent = h.View(helpKeyMap{})
+	var bindings = []struct {
+		Key         string
+		Description string
+	}{
+		{
+			"Ctrl+C", "quit",
+		},
+		{
+			"Tab", "send request",
+		},
+		{
+			"Ctrl+Up", "scroll result ↑",
+		},
+		{
+			"Ctrl+Down", "scroll result ↓",
+		},
+		{
+			"Alt+A", "copy response",
+		},
+		{
+			"Alt+S", "copy headers",
+		},
+		{
+			"Alt+D", "copy selected header",
+		},
+	}
+	var sb strings.Builder
+	for i, item := range bindings {
+		sb.WriteString(item.Key)
+		sb.WriteRune(' ')
+		sb.WriteString(item.Description)
+		if i < len(bindings)-1 {
+			sb.WriteString(" • ")
+		}
+	}
+	m.helpComponent = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("3")).
+		Width(m.windowWidth).
+		Render(sb.String())
+}
+
+func calculateHeightForViewport(windowWidth, windowHeight int) int {
+	if windowWidth < 160 {
+		return windowHeight - 12
+	}
+	return windowHeight - 11
 }
 
 // Attempts to copy last hit's result to clipboard; populates error component on failure
