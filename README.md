@@ -42,6 +42,8 @@ Accept: application/json
 # Supported Flags
 * `-insecure`  
     Skip SSL cert checks.
+* `-location`  
+    Follow redirects.
 
 ## What's planned
 * Releases.
