@@ -88,3 +88,33 @@ func TestPlainResponseBody(t *testing.T) {
 		})
 	}
 }
+
+func TestRedirects(t *testing.T) {
+	var tests = []struct {
+		name             string
+		input            string
+		expectedResponse string
+	}{
+		{
+			"No Redirects",
+			`GET "http://www.ramitmittal.com"`,
+			"301 Moved Permanently",
+		},
+		{
+			"With Redirects",
+			`GET "http://www.ramitmittal.com" -location`,
+			"200 OK",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if hr := Hit(test.input); hr == nil || hr.Err != nil {
+				t.Fail()
+			} else if hr.ResponseHeaders[0] != test.expectedResponse {
+				t.Log(hr.ResponseHeaders[0])
+				t.Fail()
+			}
+		})
+	}
+}

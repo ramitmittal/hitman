@@ -57,6 +57,7 @@ func formatResponseBody(body []byte) string {
 
 var (
 	flagInsecureSkipVerify = "insecure"
+	flagFollowRedirects    = "location"
 )
 
 // Perform an HTTP request based on the command text
@@ -69,17 +70,18 @@ func Hit(text string) (hr *HitResult) {
 		return
 	}
 
-	client := http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-	}
+	client := http.Client{}
 
 	if _, prs := parserResult.Flags[flagInsecureSkipVerify]; prs {
 		client.Transport = &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
+		}
+	}
+	if _, prs := parserResult.Flags[flagFollowRedirects]; !prs {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
 		}
 	}
 
