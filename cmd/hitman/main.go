@@ -90,16 +90,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case tea.KeyTab:
-			if result := httpclient.Hit(m.textarea.Value()); result.Err != nil {
-				m.setError(result.Err)
-				m.viewport.SetContent("")
-			} else {
-				if m.errComponent != "" {
-					m.unsetError()
-				}
-				m.setResult(result)
-			}
-			stopPropogation = true
+			return m, hitWrapper(m.textarea.Value())
+
 		case tea.KeyCtrlDown:
 			m.scrollDown()
 			stopPropogation = true
@@ -118,6 +110,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				stopPropogation = true
 			}
+		}
+
+	case *httpclient.HitResult:
+		if msg.Err != nil {
+			m.setError(msg.Err)
+			m.viewport.SetContent("")
+		} else {
+			if m.errComponent != "" {
+				m.unsetError()
+			}
+			m.setResult(msg)
 		}
 	}
 
@@ -330,6 +333,12 @@ func (m *model) scrollUp() {
 		m.updateFormattedResult()
 	}
 	m.viewport.LineUp(1)
+}
+
+func hitWrapper(text string) tea.Cmd {
+	return func() tea.Msg {
+		return httpclient.Hit(text)
+	}
 }
 
 // Returns plain text for the title bar component
