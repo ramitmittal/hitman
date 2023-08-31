@@ -238,13 +238,6 @@ func (m *model) initHelp() {
 		Render(sb.String())
 }
 
-func calculateHeightForViewport(windowWidth, windowHeight int) int {
-	if windowWidth < 160 {
-		return windowHeight - 12
-	}
-	return windowHeight - 11
-}
-
 // Attempts to copy last hit's result to clipboard; populates error component on failure
 func (m *model) copyResult() {
 	if len(m.rawResult) == 0 {
@@ -354,6 +347,15 @@ func generateTitlePlainText() string {
 	}
 
 	return "Hitman HTTP Client v" + version
+}
+
+func calculateHeightForViewport(windowWidth, windowHeight int) int {
+	if windowWidth < 160 {
+		// because help text takes 2 lines
+		return windowHeight - 12
+	}
+	// because help text takes 1 line
+	return windowHeight - 11
 }
 
 func main() {
