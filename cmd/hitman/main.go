@@ -346,7 +346,7 @@ func generateTitlePlainText() string {
 		version = "?"
 	}
 
-	return "Hitman HTTP Client v" + version
+	return "Hitman HTTP Client " + version
 }
 
 func calculateHeightForViewport(windowWidth, windowHeight int) int {
