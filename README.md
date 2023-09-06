@@ -36,6 +36,8 @@ GET "https://jsonplaceholder.typicode.com/posts/2"
 Accept: application/json
 -insecure
 ```
+* Use `Ctrl+Up` and `Ctrl+Down` to scroll and select a header.
+* Use `Alt+A`, `Alt+S`, or `Alt+D` to copy the response to clipboard.
 
 ![an image](docs/1.PNG)
 
@@ -47,7 +49,6 @@ Accept: application/json
 
 ## What's planned
 * Releases.
-* Configurable redirects.
 * Something to do with request and response bodies.
 
 ## Meta
