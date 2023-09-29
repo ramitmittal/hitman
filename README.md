@@ -8,13 +8,15 @@ A TUI HTTP client for debugging request/response headers inspired by [restclient
 * Request + response are printed in a scrollable viewport.
 * Your input is auto-saved on exit.
 
-## How to install + run
+## Install
+Using [go](https://golang.org/):
 ```
 $ go install github.com/ramitmittal/hitman/cmd/hitman@latest
 $ hitman
 ```
+Or download a [binary package](https://github.com/ramitmittal/hitman/releases/latest).
 
-## How to use
+## Usage
 * Type a request definition and press `TAB` to send.
 ```
 GET jsonplaceholder.typicode.com/posts/2
@@ -49,7 +51,7 @@ Accept: application/json
 
 ## What's planned
 * Releases.
-* Something to do with request and response bodies.
+* Something to do with request bodies.
 
 ## Meta
 Issues + PRs are welcome!
