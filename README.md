@@ -43,7 +43,7 @@ Accept: application/json
 
 ![an image](docs/1.PNG)
 
-# Supported Flags
+## Supported Flags
 * `-insecure`  
     Skip SSL cert checks.
 * `-location`  
